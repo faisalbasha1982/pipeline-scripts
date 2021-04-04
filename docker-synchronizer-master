@@ -1,0 +1,49 @@
+
+
+#########################
+FROM mcr.microsoft.com/dotnet/runtime:3.1 AS base
+WORKDIR /app
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+FROM mcr.microsoft.com/dotnet/sdk:3.1 AS build
+WORKDIR /src
+COPY ["Osn.Synchronizer.Console/Osn.Synchronizer.Console.csproj", "Osn.Synchronizer.Console/"]
+COPY ["Business/Osn.Synchronizer.Process/Osn.Synchronizer.Process.csproj", "Business/Osn.Synchronizer.Process/"]
+COPY ["Business/Osn.Synchronizer.Entity/Osn.Synchronizer.Entity.csproj", "Business/Osn.Synchronizer.Entity/"]
+COPY ["Business/Osn.Synchronizer.Models/Osn.Synchronizer.Models.csproj", "Business/Osn.Synchronizer.Models/"]
+COPY ["Data/Osn.Synchronizer.Data/Osn.Synchronizer.Data.csproj", "Data/Osn.Synchronizer.Data/"]
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+ARG HTTP_PROXY="http://10.250.199.65:3128"
+ARG HTTPS_PROXY="http://10.250.199.65:3128"
+ARG http_proxy="http://10.250.199.65:3128"
+ARG https_proxy="http://10.250.199.65:3128"
+
+RUN dotnet restore "Osn.Synchronizer.Console/Osn.Synchronizer.Console.csproj"
+COPY . .
+WORKDIR "/src/Osn.Synchronizer.Console"
+
+RUN dotnet build "Osn.Synchronizer.Console.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "Osn.Synchronizer.Console.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Osn.Synchronizer.Console.dll","--environment=Production"]
+
+
+#COPY . .
+#WORKDIR "/src/Osn.Synchronizer.Console"
+#RUN dotnet build "Osn.Synchronizer.Console.csproj" -c Release -o /app/build
+#
+#FROM build AS publish
+#RUN dotnet publish "Osn.Synchronizer.Console.csproj" -c Release -o /app/publish
+#
+#FROM base AS final
+#WORKDIR /app
+#COPY --from=publish /app/publish .
+#ENTRYPOINT ["dotnet", "Osn.Synchronizer.Console.dll"]
+#
+

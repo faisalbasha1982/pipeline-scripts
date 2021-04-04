@@ -1,0 +1,44 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+WORKDIR /app
+
+# copy csproj and restore as distinct layers
+COPY *.sln .
+COPY Business/Osn.Thanos.Dto/*.csproj ./Business/Osn.Thanos.Dto/
+COPY Business/Osn.Thanos.Entities/*.csproj ./Business/Osn.Thanos.Entities/
+COPY Business/Osn.Thanos.Process/*.csproj ./Business/Osn.Thanos.Process/
+COPY Business/Osn.Thanos.Models/*.csproj  ./Business/Osn.Thanos.Models/
+COPY Data/Osn.Thanos.Data/*.csproj ./Data/Osn.Thanos.Data/
+COPY Osn.Thanos.Api/*.csproj ./Osn.Thanos.Api/
+
+ARG HTTP_PROXY="http://10.250.199.65:3128"
+ARG HTTPS_PROXY="http://10.250.199.65:3128"
+ARG http_proxy="http://10.250.199.65:3128"
+ARG https_proxy="http://10.250.199.65:3128"
+
+#RUN export http_proxy="http://10.250.199.65:3128/"
+#RUN export https_proxy="http://10.250.199.65:3128/"
+#RUN export HTTP_PROXY="http://10.250.199.65:3128/"
+#RUN export HTTPS_PROXY="http://10.250.199.65:3128/"
+#RUN export no_proxy="docker-registry.osn.com,127.0.0.1,localhost,10.206.48.136"
+#RUN export NO_PROXY="docker-registry.osn.com,127.0.0.1,localhost,10.206.48.136"
+
+
+RUN dotnet restore 
+
+# copy everything else and build
+COPY Osn.Thanos.Api/. ./Osn.Thanos.Api/
+COPY Business/Osn.Thanos.Dto/. ./Business/Osn.Thanos.Dto/
+COPY Business/Osn.Thanos.Entities/. ./Business/Osn.Thanos.Entities/
+COPY Business/Osn.Thanos.Process/. ./Business/Osn.Thanos.Process/
+COPY Business/Osn.Thanos.Models/.  ./Business/Osn.Thanos.Models/
+COPY Data/Osn.Thanos.Data/. ./Data/Osn.Thanos.Data/
+
+WORKDIR /app/Osn.Thanos.Api
+
+ENV ASPNETCORE_ENVIRONMENT=Uat
+RUN dotnet publish -c Release -o out
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS runtime
+WORKDIR /app
+COPY --from=build /app/Osn.Thanos.Api/out ./
+ENTRYPOINT ["dotnet", "Osn.Thanos.Api.dll","--environment=Uat"]

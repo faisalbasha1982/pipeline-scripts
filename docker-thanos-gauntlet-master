@@ -1,0 +1,29 @@
+FROM python:3.9.1-buster
+
+ADD . /code
+WORKDIR  /code
+
+RUN export http_proxy="http://10.250.199.65:3128/"
+RUN export HTTP_PROXY="http://10.250.199.65:3128/"
+RUN export https_proxy="http://10.250.199.65:3128/"
+RUN export HTTPS_PROXY="http://10.250.199.65:3128/"
+RUN export no_proxy="docker-registry.osn.com,127.0.0.1,localhost,10.206.48.136"
+RUN export NO_PROXY="docker-registry.osn.com,127.0.0.1,localhost,10.206.48.136"
+
+RUN pip3 install -r requirements.txt --proxy=http://10.250.199.65:3128/
+COPY . .
+
+# ENV ENV='Docker'
+# ENV mongo_connection='mongodb://fawazi:fawzi@dev-mongodb-node1.broadcast.local:27017/thanos'
+# ENV kafka_bootstrap_servers='10.206.48.89:30855,10.206.48.89:31638,10.206.48.89:31028'
+# ENV kafka_topic_prefix='bcm_uat_thanos_gauntlet'
+# ENV table_names='dbo.lic'
+# ENV smtp_host='10.250.250.251'
+# ENV smtp_port='25'
+# ENV smtp_mailfrom='no-reply.thanos-gauntlet@osn.com'
+# ENV smtp_rcptto='ahmed.fawzi@osn.com'
+# ENV has_payload='FALSE'
+
+#RUN pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org -r requirements.txt
+
+CMD [ "python", "main.py" ]
